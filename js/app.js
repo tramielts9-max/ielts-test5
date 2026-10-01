@@ -234,3 +234,62 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
+
+// ==========================================================================
+// BỘ MÁY SOCRATIC TIỆM TIẾN: BẤM GỬI LÀ HIỆN ĐÁP ÁN + MỞ NẤC TIẾP THEO
+// ==========================================================================
+window.checkSocratic = function(qId, stepIdx, guideAnswer, bridgeNext, finalAnswer) {
+  const inputEl = document.getElementById(`${qId}_soc_in_${stepIdx}`);
+  const fbEl = document.getElementById(`${qId}_soc_fb_${stepIdx}`);
+  const nextStepEl = document.getElementById(`${qId}_soc_step_${stepIdx + 1}`);
+  const badgeEl = document.getElementById(`socratic_badge_${qId}`);
+  if (!fbEl) return;
+
+  // 1. Khóa ô nhập và nút gửi của nấc hiện tại
+  if (inputEl) inputEl.disabled = true;
+  const btn = document.getElementById(`btn_${qId}_s${stepIdx}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+    btn.style.cursor = "default";
+  }
+
+  // 2. Hiện ngay Lời giải hướng dẫn & Cầu nối dẫn dắt
+  fbEl.style.display = "block";
+  fbEl.innerHTML = `
+    <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 10px 14px; border-radius: 6px; margin-top: 8px; line-height: 1.6;">
+      <div style="color: #166534; font-weight: 700; margin-bottom: 4px;">🎯 LỜI GIẢI HƯỚNG DẪN:</div>
+      <div style="color: #1e293b;">${guideAnswer}</div>
+      ${bridgeNext ? `<div style="margin-top: 6px; font-style: italic; color: #475569; font-size: 0.95em;">🌉 <i>${bridgeNext}</i></div>` : ''}
+    </div>
+  `;
+
+  // 3. Mở khóa nấc tiếp theo
+  if (nextStepEl) {
+    nextStepEl.style.display = "block";
+    if (badgeEl) badgeEl.innerText = `Nấc ${stepIdx + 1}/4`;
+    const nextInput = document.getElementById(`${qId}_soc_in_${stepIdx + 1}`);
+    if (nextInput) setTimeout(() => nextInput.focus(), 150);
+  } else {
+    // Đã qua nấc 4/4: Đánh dấu hoàn thành
+    if (badgeEl) {
+      badgeEl.innerText = `✓ Đã hoàn thành 4/4 nấc`;
+      badgeEl.style.background = "#16a34a";
+      badgeEl.style.color = "white";
+    }
+
+    // Tự động điền đáp án chuẩn vào bài làm chính
+    if (finalAnswer) {
+      const textInput = document.getElementById(`${qId}_input`);
+      if (textInput) {
+        textInput.value = finalAnswer;
+        textInput.dispatchEvent(new Event('input'));
+      }
+      const radioBtn = document.querySelector(`input[name="${qId}"][value="${finalAnswer}"]`);
+      if (radioBtn) {
+        radioBtn.checked = true;
+        radioBtn.dispatchEvent(new Event('change'));
+      }
+    }
+  }
+};
